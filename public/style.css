@@ -1,3 +1,5 @@
+/*Previous blue theme styles are commented out while using the current index.html style */
+
 :root {
   --bg: #0f1b2d;
   --panel: rgba(16, 40, 83, 0.95);
@@ -157,3 +159,6 @@ button:active {
     min-height: 340px;
   }
 }
+
+
+
