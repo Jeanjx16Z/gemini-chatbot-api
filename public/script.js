@@ -1,21 +1,32 @@
 const form = document.getElementById('chat-form');
 const input = document.getElementById('user-input');
 const chatBox = document.getElementById('chat-box');
+const submitButton = form.querySelector('button[type="submit"]');
 
 const conversation = [];
+let isLoading = false;
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
 
+  if (isLoading) return;
+
   const userMessage = input.value.trim();
   if (!userMessage) return;
 
+  isLoading = true;
+  input.disabled = true;
+  submitButton.disabled = true;
+
   input.value = '';
   appendMessage('user', userMessage);
-  conversation.push({ role: 'user', text: userMessage });
+
+  const pendingUserMessage = { role: 'user', text: userMessage };
+  conversation.push(pendingUserMessage);
 
   const thinkingMessage = appendMessage('bot', 'Thinking...');
   thinkingMessage.classList.add('thinking');
+  let hasModelResponse = false;
 
   try {
     const response = await fetch('/api/chat', {
@@ -36,12 +47,22 @@ form.addEventListener('submit', async (event) => {
     if (result) {
       updateMessage(thinkingMessage, result);
       conversation.push({ role: 'model', text: result });
+      hasModelResponse = true;
     } else {
       updateMessage(thinkingMessage, 'Sorry, no response received.');
     }
   } catch (error) {
     updateMessage(thinkingMessage, 'Failed to get response from server.');
     console.error('Chat request failed:', error);
+  } finally {
+    if (!hasModelResponse && conversation[conversation.length - 1] === pendingUserMessage) {
+      conversation.pop();
+    }
+
+    isLoading = false;
+    input.disabled = false;
+    submitButton.disabled = false;
+    input.focus();
   }
 });
 
